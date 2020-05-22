@@ -1,0 +1,95 @@
+---
+title: "work"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("rpart")
+install.packages("rpart.plot")
+install.packages("pRoc")
+install.packages("caTools")
+library(rpart)
+library(rpart.plot)
+library(caTools)
+```
+
+```{r}
+library(pROC)
+```
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#STEP 1 - load data
+data = read.csv("C:\\Users\\kayla\\Downloads\\HR.csv")
+View(data)
+str(data)
+summary(data)
+data$left <- as.factor(data$left)
+str(data)
+```
+
+
+```{r}
+#STEP 2 -split data into train and test
+nrow(data)
+set.seed(123)
+new_data <- sample.split(Y=data$left, SplitRatio = 0.7)
+train_df <- data[new_data,]
+test_df <- data[new_data,]
+```
+
+```{r}
+#STEP 3 - build the model - fita DT using train data
+DTModel <- rpart(left~. , method = "class", data = train_df,
+                 parms = list(split = "information gain"),
+                 control = rpart.control(minsplit = 100, maxdepth = 4))
+
+rpart.plot(DTModel, type = 3, extra = 101, fallen.leaves = F, cex=0.8)
+DTModel
+```
+
+```{r}
+#STEP 4 - use the model to make preditions on test data
+pred_test <- predict(DTModel, test_df, type = "class")
+prob_test <- predict(DTModel, test_df, type = "prob")
+head(pred_test, n=16)
+head(prob_test)
+
+actual_test <- test_df$left
+head(actual_test, n=16)
+```
+
+```{r}
+#STEP 5 - calculate Accuracy
+t1 <- table(predictions = predTest, actual = actual_test)
+t1
+
+accuracy <- sum(diag(t1))/sum(t1)
+accuracy
+
+test_df$probality <- prob_test[,"1"]
+test_df$predictions <- pred_test
+test_df$actual <- actual_test
+
+head(test_df)
+```
+
+```{r}
+#ROC and are under the curve
+#ROC <- roc(actual_test, prob_tes[,2])
+
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
